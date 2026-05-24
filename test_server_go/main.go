@@ -1,49 +1,28 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"net"
-	"strings"
+	"net/http"
 )
 
-func main() {
+func hello(w http.ResponseWriter, req *http.Request) {
 
-	listener, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		log.Fatal("Error listening:", err)
-	}
+	fmt.Fprintf(w, "hello\n")
+}
 
-	defer listener.Close()
+func headers(w http.ResponseWriter, req *http.Request) {
 
-	for {
-
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println("Error accepting conn:", err)
-			continue
+	for name, headers := range req.Header {
+		for _, h := range headers {
+			fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
-
-		go handleConnection(conn)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func main() {
 
-	defer conn.Close()
+	http.HandleFunc("/hello", hello)
+	http.HandleFunc("/headers", headers)
 
-	reader := bufio.NewReader(conn)
-	message, err := reader.ReadString('\n')
-	if err != nil {
-		log.Printf("Read error: %v", err)
-		return
-	}
-
-	ackMsg := strings.ToUpper(strings.TrimSpace(message))
-	response := fmt.Sprintf("ACK: %s\n", ackMsg)
-	_, err = conn.Write([]byte(response))
-	if err != nil {
-		log.Printf("Server write error: %v", err)
-	}
+	http.ListenAndServe(":8080", nil)
 }
