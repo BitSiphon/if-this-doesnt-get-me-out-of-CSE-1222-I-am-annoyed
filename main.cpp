@@ -114,7 +114,10 @@ int main(int argc, char *argv[]) {
               << std::strerror(errno) << "\n";
   }
 
-  std::string hello_str = "GET / HTTP/1.1\r\n";
+  std::string hello_str = "GET /headers HTTP/1.1\r\n"
+                          "Host: localhost:8080\r\n"
+                          "Connection: close\r\n"
+                          "\r\n";
   int bytes_sent = send(sockfd, hello_str.c_str(), hello_str.length(), 0);
 
   int numbytes;
