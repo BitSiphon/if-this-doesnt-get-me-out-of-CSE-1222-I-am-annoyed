@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 const std::string DEFAULT_PORT = "8080";
-const int MAX_DATA_SIZE = 100; // bytes
+const int MAX_DATA_SIZE = 1024; // bytes
 
 // get sockaddr, IPv4 or IPv6
 void *get_in_addr(struct sockaddr *sa) {
@@ -66,12 +66,12 @@ int connect_tcp(std::string addr_string, std::string addr_port) {
     return -1;
   }
 
-  // Cleanup
-  freeaddrinfo(resolvedinfo);
-
   inet_ntop(p->ai_family, get_in_addr(p->ai_addr), parsed_str,
             sizeof parsed_str);
   std::cout << "Established connection to " << parsed_str << "\n";
+
+  // Cleanup
+  freeaddrinfo(resolvedinfo);
 
   return sockfd;
 }
@@ -113,4 +113,19 @@ int main(int argc, char *argv[]) {
               << "\n"
               << std::strerror(errno) << "\n";
   }
+
+  std::string hello_str = "GET / HTTP/1.1\r\n";
+  int bytes_sent = send(sockfd, hello_str.c_str(), hello_str.length(), 0);
+
+  int numbytes;
+  char buf[MAX_DATA_SIZE];
+  if ((numbytes = recv(sockfd, buf, MAX_DATA_SIZE - 1, 0)) == -1) {
+    perror("recv");
+    exit(1);
+  }
+
+  buf[numbytes] = '\0';
+  std::cout << "Received " << buf << "\n";
+
+  close(sockfd);
 }
