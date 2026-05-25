@@ -48,12 +48,7 @@ constexpr std::string_view to_string(HTTP_METHOD method) {
   }
 }
 
-/*
- * Helper Functions
- */
-
-void *get_in_addr(struct sockaddr *sa);
-
+namespace http {
 /*
  * HTTP Parsing
  */
@@ -63,3 +58,4 @@ void *get_in_addr(struct sockaddr *sa);
  */
 
 int connect_tcp(std::string addr_string, std::string addr_port);
+} // namespace http

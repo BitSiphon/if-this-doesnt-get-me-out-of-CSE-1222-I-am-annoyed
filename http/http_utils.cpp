@@ -1,44 +1,63 @@
+#include "http_utils.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <optional>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <unordered_map>
 
 /*
- * Helper Functions
+ * Private Helper Functions
  */
-
+namespace {
 // get sockaddr, IPv4 or IPv6
-void *get_in_addr(struct sockaddr *sa) {
+void *get_in_addr(sockaddr *sa) {
   if (sa->sa_family == AF_INET) {
     return &(((struct sockaddr_in *)sa)->sin_addr);
   }
-
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+// Converts a sockaddr into a human-readable IP string
+std::string to_string(const addrinfo *p) {
+  if (!p)
+    return "Unknown Address";
+
+  char parsed_str[INET6_ADDRSTRLEN];
+  if (inet_ntop(p->ai_family, get_in_addr(p->ai_addr), parsed_str,
+                sizeof(parsed_str))) {
+    return std::string(parsed_str);
+  }
+  return "Invalid Address";
+}
+
+std::string create_header() { return ""; }
+} // namespace
+
+namespace http {
 /*
  * HTTP Parsing
  */
-
-std::string generate_header() { return "hi"; };
+std::string create_client_header(
+    HTTP_METHOD method, std::string host, std::string path,
+    std::optional<std::unordered_map<std::string, std::string>> headers) {
+  return "";
+};
 
 /*
  * Core Functions
  */
 
-// Returns established socket file descriptor or -1 on error.
+// Returns established socket file descriptor. Returns -1 on error.
 int connect_tcp(std::string addr_string, std::string addr_port) {
-  // Parse addr
-
   int sockfd;
   int result;
   addrinfo hints;
   addrinfo *resolvedinfo, *p;
-  char parsed_str[INET6_ADDRSTRLEN];
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
@@ -60,9 +79,8 @@ int connect_tcp(std::string addr_string, std::string addr_port) {
       continue;
     }
 
-    inet_ntop(p->ai_family, get_in_addr(p->ai_addr), parsed_str,
-              sizeof parsed_str);
-    std::cout << "Attempting to connect: " << parsed_str << "\n";
+    // Using the new helper function here
+    std::cout << "Attempting to connect: " << to_string(p) << "\n";
 
     if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
       close(sockfd);
@@ -73,15 +91,17 @@ int connect_tcp(std::string addr_string, std::string addr_port) {
   }
 
   if (p == nullptr) {
+    freeaddrinfo(
+        resolvedinfo); // Make sure to clean up if loop fails completely
     return -1;
   }
 
-  inet_ntop(p->ai_family, get_in_addr(p->ai_addr), parsed_str,
-            sizeof parsed_str);
-  std::cout << "Established connection to " << parsed_str << "\n";
+  // Using the new helper function here
+  std::cout << "Established connection to " << to_string(p) << "\n";
 
   // Cleanup
   freeaddrinfo(resolvedinfo);
 
   return sockfd;
 }
+} // namespace http

@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Establish connection
-  int sockfd = connect_tcp(addr_string, addr_port);
+  int sockfd = http::connect_tcp(addr_string, addr_port);
   if (sockfd == -1) {
     std::cout << "Failed to connect to " << addr_string << ":" << addr_port
               << "\n"
