@@ -7,6 +7,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+/*
+ * Helper Functions
+ */
+
 // get sockaddr, IPv4 or IPv6
 void *get_in_addr(struct sockaddr *sa) {
   if (sa->sa_family == AF_INET) {
@@ -15,6 +19,16 @@ void *get_in_addr(struct sockaddr *sa) {
 
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
+
+/*
+ * HTTP Parsing
+ */
+
+std::string generate_header() { return "hi"; };
+
+/*
+ * Core Functions
+ */
 
 // Returns established socket file descriptor or -1 on error.
 int connect_tcp(std::string addr_string, std::string addr_port) {
