@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
                           "Connection: close\r\n"
                           "\r\n";
   int bytes_sent = send(sockfd, hello_str.c_str(), hello_str.length(), 0);
+  std::cout << "Sent " << bytes_sent << " bytes\n";
 
   int numbytes;
   char buf[MAX_DATA_SIZE];
