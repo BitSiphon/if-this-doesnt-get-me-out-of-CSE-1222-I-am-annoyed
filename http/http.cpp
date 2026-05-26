@@ -1,11 +1,14 @@
 #include "http.h"
 #include <arpa/inet.h>
+#include <cassert>
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -46,6 +49,36 @@ std::string build_message_header(
     }
 
     return result + "\r\n";
+}
+
+// Parse standardized HTTP 1.1 header
+std::string parse_message_header(std::string_view msg) {
+    size_t pos;
+    size_t prev_pos{0};
+    bool is_first_line = true;
+
+    while ((pos = msg.find("\r\n", prev_pos)) != std::string_view::npos) {
+        std::string_view line = msg.substr(prev_pos, pos - prev_pos);
+
+        // end of header
+        if (line.empty()) {
+            break;
+        }
+
+        // start_line
+        if (is_first_line) {
+            is_first_line = false;
+
+            // This code only handles 1 and 1.1
+            // TEMPORARY
+            assert(line.substr(0, 6) == "HTTP/1" || line.substr(0, 8) == "HTTP/1.1");
+        }
+
+        // Move prev_pos past the current "\r\n"
+        prev_pos = pos + 2;
+    }
+
+    return "\r\n";
 }
 } // namespace
 
