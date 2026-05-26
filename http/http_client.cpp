@@ -1,9 +1,11 @@
 #include "http.h"
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <unordered_map>
 
 int main(int argc, char *argv[]) {
     // Parse Args
@@ -42,11 +44,11 @@ int main(int argc, char *argv[]) {
                   << std::strerror(errno) << "\n";
     }
 
-    std::string hello_str = "GET /headers HTTP/1.1\r\n"
-                            "Host: localhost:8080\r\n"
-                            "Connection: close\r\n"
-                            "\r\n";
-    int bytes_sent = send(sockfd, hello_str.c_str(), hello_str.length(), 0);
+    std::unordered_map<std::string, std::string> headers{{"Connection", "close"}};
+    std::string message_header = http::create_request_message_header(
+        HTTP_METHOD::GET, addr_string + ":" + addr_port, "/headers", headers);
+
+    int bytes_sent = send(sockfd, message_header.c_str(), message_header.length(), 0);
     std::cout << "Sent " << bytes_sent << " bytes\n";
 
     int numbytes;

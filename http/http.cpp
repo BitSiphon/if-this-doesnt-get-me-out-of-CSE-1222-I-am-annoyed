@@ -35,7 +35,7 @@ std::string to_string(const addrinfo *p) {
 }
 
 // Create standardized HTTP 1.1 header
-std::string create_head(
+std::string build_message_header(
     std::string start_line, std::optional<std::unordered_map<std::string, std::string>> headers) {
     std::string result{start_line + "\r\n"};
 
@@ -55,7 +55,7 @@ namespace http {
  */
 
 /// Creates a request HTTP header, copying the optional headers for safe re-use.
-std::string create_client_head(
+std::string create_request_message_header(
     HTTP_METHOD method,
     std::string_view host,
     std::string_view path,
@@ -64,23 +64,8 @@ std::string create_client_head(
 
     updated_headers["Host"] = std::string(host);
 
-    return create_head(std::string(to_string(method)) + " " + std::string(path), updated_headers);
-}
-
-/// Creates a request HTTP header, efficiently consuming/moving the optional
-/// headers.
-std::string create_client_head(
-    HTTP_METHOD method,
-    std::string_view host,
-    std::string_view path,
-    std::optional<std::unordered_map<std::string, std::string>> &&headers) {
-    auto updated_headers =
-        std::move(headers).value_or(std::unordered_map<std::string, std::string>{});
-
-    updated_headers["Host"] = std::string(host);
-
-    return create_head(
-        std::string(to_string(method)) + " " + std::string(path), std::move(updated_headers));
+    std::string start_line = std::string(to_string(method)) + " " + std::string(path) + " HTTP/1.1";
+    return build_message_header(std::move(start_line), updated_headers);
 }
 
 /*

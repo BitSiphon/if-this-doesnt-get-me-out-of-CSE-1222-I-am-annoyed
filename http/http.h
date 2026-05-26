@@ -1,16 +1,18 @@
 #pragma once
 
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
+#include <unordered_map>
 
 /*
  * Constants
  */
 
 const std::string DEFAULT_PORT = "8080";
-constexpr int MAX_DATA_SIZE = 1024; // bytes
+constexpr int MAX_DATA_SIZE = 1024; // in bytes
 
 // Standard HTTP methods
 //
@@ -53,9 +55,17 @@ namespace http {
  * HTTP Parsing
  */
 
+/// Creates a request HTTP header, copying the optional headers for safe re-use.
+std::string create_request_message_header(
+    HTTP_METHOD method,
+    std::string_view host,
+    std::string_view path,
+    const std::optional<std::unordered_map<std::string, std::string>> &headers);
+
 /*
  * Core Functions
  */
 
+// Returns established socket file descriptor. Returns -1 on error.
 int connect_tcp(std::string addr_string, std::string addr_port);
 } // namespace http
