@@ -1,0 +1,14 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+BinPackParameters: false
+BinPackArguments: false
+
+AlignAfterOpenBracket: AlwaysBreak
+# -----------------------------------
+
+Standard: Latest
+IndentWidth: 4
+ColumnLimit: 100
+---
