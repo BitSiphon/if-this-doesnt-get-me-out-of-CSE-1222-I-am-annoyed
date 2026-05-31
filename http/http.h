@@ -7,53 +7,73 @@
 #include <sys/socket.h>
 #include <unordered_map>
 
-/*
- * Constants
- */
+// =============================================================================
+// Public HTTP Namespace API
+// =============================================================================
+namespace http {
 
-const std::string DEFAULT_PORT = "8080";
+// -----------------------------------------------------------------------------
+// Constants & Types
+// -----------------------------------------------------------------------------
+constexpr std::string_view DEFAULT_PORT = "8080";
 constexpr int MAX_DATA_SIZE = 1024; // in bytes
+
+using header_map = std::unordered_map<std::string, std::string>;
 
 // Standard HTTP methods
 //
 // SECURITY: TRACE should be avoided when implementing server.
 enum class HTTP_METHOD {
-    GET,
-    HEAD,
-    OPTIONS,
-    TRACE,
-    DELETE,
-    PUT,
-    POST,
-    CONNECT,
+  GET,
+  HEAD,
+  OPTIONS,
+  TRACE,
+  DELETE,
+  PUT,
+  POST,
+  CONNECT,
 };
 
+// -----------------------------------------------------------------------------
+// Classes
+// -----------------------------------------------------------------------------
+class HTTPResponse {
+public:
+  int status_code;
+  std::string status;
+  http::header_map headers;
+
+  HTTPResponse(const std::string &status, const http::header_map &headers);
+};
+
+// -----------------------------------------------------------------------------
+// Utility Functions
+// -----------------------------------------------------------------------------
 constexpr std::string_view to_string(HTTP_METHOD method) {
-    switch (method) {
-    case HTTP_METHOD::GET:
-        return "GET";
-    case HTTP_METHOD::HEAD:
-        return "HEAD";
-    case HTTP_METHOD::OPTIONS:
-        return "OPTIONS";
-    case HTTP_METHOD::TRACE:
-        return "TRACE";
-    case HTTP_METHOD::DELETE:
-        return "DELETE";
-    case HTTP_METHOD::PUT:
-        return "PUT";
-    case HTTP_METHOD::POST:
-        return "POST";
-    case HTTP_METHOD::CONNECT:
-        return "CONNECT";
-    }
-    throw std::invalid_argument("Unknown HTTP method");
+  switch (method) {
+  case HTTP_METHOD::GET:
+    return "GET";
+  case HTTP_METHOD::HEAD:
+    return "HEAD";
+  case HTTP_METHOD::OPTIONS:
+    return "OPTIONS";
+  case HTTP_METHOD::TRACE:
+    return "TRACE";
+  case HTTP_METHOD::DELETE:
+    return "DELETE";
+  case HTTP_METHOD::PUT:
+    return "PUT";
+  case HTTP_METHOD::POST:
+    return "POST";
+  case HTTP_METHOD::CONNECT:
+    return "CONNECT";
+  }
+  throw std::invalid_argument("Unknown HTTP method");
 }
 
-namespace http {
-/*
- * HTTP Parsing
- */
+// -----------------------------------------------------------------------------
+// HTTP Parsing
+// -----------------------------------------------------------------------------
 
 /// Creates a request HTTP header, copying the optional headers for safe re-use.
 std::string create_request_message_header(
@@ -62,12 +82,13 @@ std::string create_request_message_header(
     std::string_view path,
     const std::optional<std::unordered_map<std::string, std::string>> &headers);
 
-/*
- * Core Functions
- */
+// -----------------------------------------------------------------------------
+// Core Network Functions
+// -----------------------------------------------------------------------------
 
 // Returns established socket file descriptor. Returns -1 on error.
 int connect_tcp(std::string addr_string, std::string addr_port);
 
 void get(std::string addr_string, std::string addr_port);
+
 } // namespace http
