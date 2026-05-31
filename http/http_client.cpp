@@ -37,29 +37,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Establish connection
-    int sockfd = http::connect_tcp(addr_string, addr_port);
-    if (sockfd == -1) {
-        std::cout << "Failed to connect to " << addr_string << ":" << addr_port << "\n"
-                  << std::strerror(errno) << "\n";
-    }
-
-    std::unordered_map<std::string, std::string> headers{{"Connection", "close"}};
-    std::string message_header = http::create_request_message_header(
-        HTTP_METHOD::GET, addr_string + ":" + addr_port, "/headers", headers);
-
-    int bytes_sent = send(sockfd, message_header.c_str(), message_header.length(), 0);
-    std::cout << "Sent " << bytes_sent << " bytes\n";
-
-    int numbytes;
-    char buf[MAX_DATA_SIZE];
-    if ((numbytes = recv(sockfd, buf, MAX_DATA_SIZE - 1, 0)) == -1) {
-        perror("recv");
-        exit(1);
-    }
-
-    buf[numbytes] = '\0';
-    std::cout << "Received " << buf << "\n";
-
-    close(sockfd);
+    // TODO: create a response class
+    http::get(addr_string, addr_port);
 }

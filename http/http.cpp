@@ -13,6 +13,35 @@
 #include <unistd.h>
 #include <unordered_map>
 
+// Important types & classes
+namespace http {
+typedef std::unordered_map<std::string, std::string> header_map;
+
+class HTTPResponse {
+  public:
+    int status_code;
+    std::string status;
+    http::header_map headers;
+
+    HTTPResponse(const std::string &status, const http::header_map &headers);
+};
+} // namespace http
+
+// Class functions
+namespace http {
+HTTPResponse::HTTPResponse(const std::string &status, const http::header_map &headers)
+    : status(status), headers(headers) {
+    size_t first_space_idx = status.find(" ");
+
+    if (first_space_idx != std::string::npos) {
+        std::string sub = status.substr(first_space_idx + 1, 3);
+        status_code = std::stoi(sub);
+    } else {
+        status_code = 0; // malformed
+    }
+}
+} // namespace http
+
 /*
  * Private Helper Functions
  */
@@ -52,7 +81,12 @@ std::string build_message_header(
 }
 
 // Parse standardized HTTP 1.1 header
-std::string parse_message_header(std::string_view msg) {
+http::HTTPResponse parse_message_header(std::string_view msg) {
+    // return values
+    std::string status_line;
+    http::header_map headers{};
+
+    // loop values
     size_t pos;
     size_t prev_pos{0};
     bool is_first_line = true;
@@ -69,16 +103,23 @@ std::string parse_message_header(std::string_view msg) {
         if (is_first_line) {
             is_first_line = false;
 
-            // This code only handles 1 and 1.1
-            // TEMPORARY
-            assert(line.substr(0, 6) == "HTTP/1" || line.substr(0, 8) == "HTTP/1.1");
+            // TEMPORARY: This code only handles 1.1
+            assert(line.substr(0, 8) == "HTTP/1.1");
+
+            status_line = std::string(line);
         }
+
+        int end_key_index = line.find(":");
+        std::string_view key = line.substr(0, end_key_index);
+        std::string_view index = line.substr(end_key_index + 1, line.length());
+
+        headers.insert(key, index);
 
         // Move prev_pos past the current "\r\n"
         prev_pos = pos + 2;
     }
 
-    return "\r\n";
+    return http::HTTPResponse(status_line, headers);
 }
 } // namespace
 
@@ -155,5 +196,34 @@ int connect_tcp(std::string addr_string, std::string addr_port) {
     freeaddrinfo(resolvedinfo);
 
     return sockfd;
+}
+
+void get(std::string addr_string, std::string addr_port) {
+    // Establish connection
+    int sockfd = http::connect_tcp(addr_string, addr_port);
+    if (sockfd == -1) {
+        std::cout << "Failed to connect to " << addr_string << ":" << addr_port << "\n"
+                  << std::strerror(errno) << "\n";
+    }
+
+    std::unordered_map<std::string, std::string> headers{{"Connection", "close"}};
+    std::string message_header = http::create_request_message_header(
+        HTTP_METHOD::GET, addr_string + ":" + addr_port, "/headers", headers);
+
+    int bytes_sent = send(sockfd, message_header.c_str(), message_header.length(), 0);
+    std::cout << "Sent " << bytes_sent << " bytes\n";
+
+    // buffer read header
+    int numbytes;
+    char buf[MAX_DATA_SIZE];
+    if ((numbytes = recv(sockfd, buf, MAX_DATA_SIZE - 1, 0)) == -1) {
+        perror("recv");
+        exit(1);
+    }
+
+    buf[numbytes] = '\0';
+    std::cout << "Received " << buf << "\n";
+
+    close(sockfd);
 }
 } // namespace http

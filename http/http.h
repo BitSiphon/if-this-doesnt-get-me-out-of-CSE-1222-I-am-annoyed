@@ -68,4 +68,6 @@ std::string create_request_message_header(
 
 // Returns established socket file descriptor. Returns -1 on error.
 int connect_tcp(std::string addr_string, std::string addr_port);
+
+void get(std::string addr_string, std::string addr_port);
 } // namespace http
